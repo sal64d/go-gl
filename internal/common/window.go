@@ -46,7 +46,7 @@ func InitGlow() {
 func SetupScene(program uint32, width float32, height float32) {
 	gl.UseProgram(program)
 
-  // Global settings
+	// Global settings
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
 	gl.ClearColor(0, 0, 0, 0)
@@ -54,12 +54,14 @@ func SetupScene(program uint32, width float32, height float32) {
 	// Projection matrix
 	projection := mgl32.Perspective(
 		mgl32.DegToRad(45.0),
-		width / height,
+		width/height,
 		0.1,
 		10.0,
 	)
 	projectionUniform := gl.GetUniformLocation(program, gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
+
+	log.Println("setup: projectionUniform\n", projection)
 
 	// Camera
 	camera := mgl32.LookAtV(
@@ -69,5 +71,7 @@ func SetupScene(program uint32, width float32, height float32) {
 	)
 	cameraUniform := gl.GetUniformLocation(program, gl.Str("camera\x00"))
 	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
+
+	log.Println("setup: cameraUniform\n", camera)
 
 }
