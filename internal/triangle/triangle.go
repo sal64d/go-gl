@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 const width, height = 800, 600
@@ -45,9 +46,38 @@ func Main() {
 	fsSource := common.LoadShaderSource("./internal/triangle/fragmentShader.fs")
 	program := common.NewProgram(vsSource, fsSource)
 
+	gl.UseProgram(program)
+
+	// 3. model
+	model := mgl32.Ident4()
+	modelUniform := gl.GetUniformLocation(
+		program,
+		gl.Str("model\x00"),
+	)
+	gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
+
+  angle := 0.0
+  prevTime := glfw.GetTime()
+
 	for !window.ShouldClose() {
 
+    gl.ClearColor(0,0,0,1)
+    gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+    currTime := glfw.GetTime()
+    elapsed := currTime - prevTime
+    prevTime = currTime
+
+    angle += elapsed / 2
+
+
+		model := mgl32.HomogRotate3D(
+			float32(angle),
+			mgl32.Vec3{0, 1, 0},
+		)
+
 		gl.UseProgram(program)
+		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 		gl.BindVertexArray(vao)
 
 		gl.DrawArrays(gl.TRIANGLES, 0, 3)
