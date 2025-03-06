@@ -23,9 +23,13 @@ func Main() {
 	// Push all the vertex info inside vao:
 	// 1.a. Gen and load vertex data
 	data := []float32{
-		-0.5, -0.5, 0,
-		-0.5, 0.5, 0,
-		0.5, -0.5, 0,
+		0.5, 0.5, 0,
+    -0.5, 0.5, 0,
+    0.5, -0.5, 0,
+
+    -0.5, 0.5, 0,
+    0.5, -0.5, 0,
+    -0.5, -0.5, 0,
 	}
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
@@ -38,7 +42,14 @@ func Main() {
 	)
 
 	// 1.b. Specify the vertex attribute data
-	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false, 3*4, 0)
+	gl.VertexAttribPointerWithOffset(
+		0,
+		3,
+		gl.FLOAT,
+		false,
+		3*4,
+		0,
+	)
 	gl.EnableVertexAttribArray(0)
 
 	// 2. Load, compile and link program
@@ -56,20 +67,19 @@ func Main() {
 	)
 	gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
-  angle := 0.0
-  prevTime := glfw.GetTime()
+	angle := 0.0
+	prevTime := glfw.GetTime()
 
 	for !window.ShouldClose() {
 
-    gl.ClearColor(0,0,0,1)
-    gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		gl.ClearColor(0, 0, 0, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-    currTime := glfw.GetTime()
-    elapsed := currTime - prevTime
-    prevTime = currTime
+		currTime := glfw.GetTime()
+		elapsed := currTime - prevTime
+		prevTime = currTime
 
-    angle += elapsed / 2
-
+		angle += elapsed / 2
 
 		model := mgl32.HomogRotate3D(
 			float32(angle),
@@ -80,7 +90,7 @@ func Main() {
 		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 		gl.BindVertexArray(vao)
 
-		gl.DrawArrays(gl.TRIANGLES, 0, 3)
+		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
 		window.SwapBuffers()
 		glfw.PollEvents()
