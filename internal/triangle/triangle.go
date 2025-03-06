@@ -10,6 +10,18 @@ import (
 
 const width, height = 800, 600
 
+func attachModelToProgram(program uint32) int32 {
+
+	gl.UseProgram(program)
+
+	modelUniform := gl.GetUniformLocation(
+		program,
+		gl.Str("model\x00"),
+	)
+
+	return (modelUniform)
+}
+
 func Main() {
 	window := common.NewWindow(width, height)
 	common.InitGlow()
@@ -24,12 +36,12 @@ func Main() {
 	// 1.a. Gen and load vertex data
 	data := []float32{
 		0.5, 0.5, 0,
-    -0.5, 0.5, 0,
-    0.5, -0.5, 0,
+		-0.5, 0.5, 0,
+		0.5, -0.5, 0,
 
-    -0.5, 0.5, 0,
-    0.5, -0.5, 0,
-    -0.5, -0.5, 0,
+		-0.5, 0.5, 0,
+		0.5, -0.5, 0,
+		-0.5, -0.5, 0,
 	}
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
@@ -54,18 +66,19 @@ func Main() {
 
 	// 2. Load, compile and link program
 	vsSource := common.LoadShaderSource("./internal/triangle/vertexShader.vs")
-	fsSource := common.LoadShaderSource("./internal/triangle/fragmentShader.fs")
-	program := common.NewProgram(vsSource, fsSource)
-
-	gl.UseProgram(program)
+	fsSource1 := common.LoadShaderSource("./internal/triangle/fragmentShader1.fs")
+	fsSource2 := common.LoadShaderSource("./internal/triangle/fragmentShader2.fs")
+	program1 := common.NewProgram(vsSource, fsSource1)
+	program2 := common.NewProgram(vsSource, fsSource2)
 
 	// 3. model
 	model := mgl32.Ident4()
-	modelUniform := gl.GetUniformLocation(
-		program,
-		gl.Str("model\x00"),
-	)
-	gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
+
+  model1 := attachModelToProgram(program1)
+  model2 := attachModelToProgram(program2)
+
+	gl.UniformMatrix4fv(model1, 1, false, &model[0])
+	gl.UniformMatrix4fv(model2, 1, false, &model[0])
 
 	angle := 0.0
 	prevTime := glfw.GetTime()
@@ -86,11 +99,15 @@ func Main() {
 			mgl32.Vec3{0, 1, 0},
 		)
 
-		gl.UseProgram(program)
-		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
+		gl.UseProgram(program1)
+		gl.UniformMatrix4fv(model1, 1, false, &model[0])
 		gl.BindVertexArray(vao)
 
-		gl.DrawArrays(gl.TRIANGLES, 0, 6)
+		gl.DrawArrays(gl.TRIANGLES, 0, 3)
+
+		gl.UseProgram(program2)
+		gl.UniformMatrix4fv(model2, 1, false, &model[0])
+		gl.DrawArrays(gl.TRIANGLES, 3, 3)
 
 		window.SwapBuffers()
 		glfw.PollEvents()
