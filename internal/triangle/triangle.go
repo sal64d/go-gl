@@ -34,22 +34,34 @@ func Main() {
 
 	// Push all the vertex info inside vao:
 	// 1.a. Gen and load vertex data
-	data := []float32{
-		0.5, 0.5, 0,
-		-0.5, 0.5, 0,
-		0.5, -0.5, 0,
-
-		-0.5, 0.5, 0,
-		0.5, -0.5, 0,
-		-0.5, -0.5, 0,
+	vertices := []float32{
+		0.5, 0.5, 0, // top right
+		-0.5, 0.5, 0, // top left
+		0.5, -0.5, 0, // bottom right
+		-0.5, -0.5, 0, // bottom left
 	}
+	indices := []int32{
+		0, 1, 2,
+		1, 2, 3,
+	}
+
+	var ebo uint32
+	gl.GenBuffers(1, &ebo)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+	gl.BufferData(
+		gl.ELEMENT_ARRAY_BUFFER,
+		len(indices)*4,
+		gl.Ptr(indices),
+		gl.STATIC_DRAW,
+	)
+
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(
 		gl.ARRAY_BUFFER,
-		len(data)*4,
-		gl.Ptr(data),
+		len(vertices)*4,
+		gl.Ptr(vertices),
 		gl.STATIC_DRAW,
 	)
 
@@ -74,8 +86,8 @@ func Main() {
 	// 3. model
 	model := mgl32.Ident4()
 
-  model1 := attachModelToProgram(program1)
-  model2 := attachModelToProgram(program2)
+	model1 := attachModelToProgram(program1)
+	model2 := attachModelToProgram(program2)
 
 	gl.UniformMatrix4fv(model1, 1, false, &model[0])
 	gl.UniformMatrix4fv(model2, 1, false, &model[0])
@@ -99,15 +111,18 @@ func Main() {
 			mgl32.Vec3{0, 1, 0},
 		)
 
-		gl.UseProgram(program1)
+		if int(angle) % 10  > 5 {
+			gl.UseProgram(program2)
+		} else {
+			gl.UseProgram(program1)
+		}
 		gl.UniformMatrix4fv(model1, 1, false, &model[0])
 		gl.BindVertexArray(vao)
+		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 
-		gl.DrawArrays(gl.TRIANGLES, 0, 3)
-
-		gl.UseProgram(program2)
-		gl.UniformMatrix4fv(model2, 1, false, &model[0])
-		gl.DrawArrays(gl.TRIANGLES, 3, 3)
+		gl.DrawElements(
+			gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil,
+		)
 
 		window.SwapBuffers()
 		glfw.PollEvents()
