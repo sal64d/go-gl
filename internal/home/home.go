@@ -71,7 +71,7 @@ func Main() {
 	common.InitGlow()
 	defer glfw.Terminate()
 
-	vertexData, indices := createCube(1, 1, 1)
+	vertexData, indices := createCube(0.5, 1, 0.8)
 
 	vertexShader := common.LoadShaderSource("./internal/home/vertexShader.vs")
 	fragmentShader := common.LoadShaderSource("./internal/home/fragmentShader.fs")
