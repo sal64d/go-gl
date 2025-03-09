@@ -40,23 +40,42 @@ func Main() {
 
 	groundMaterial := renderer.Material{
 		ShaderType: renderer.Lambert,
-		Color:      mgl32.Vec4{1, 0, 0, 1},
+		Color:      mgl32.Vec4{0.2, 0.2, 0.2, 1},
 	}
-	mesh := primitives.CreatePlane(.5, .5, groundMaterial)
-	mesh.TransformMesh(mgl32.HomogRotate3DX(mgl32.DegToRad(45)))
 
-	scene := renderer.Scene{Models: []renderer.Model{
-		{
-			Meshes: []renderer.Mesh{mesh},
+	wallMaterial := renderer.Material{
+		ShaderType: renderer.Lambert,
+		Color:      mgl32.Vec4{1.0, 0.2, 0.2, 1},
+	}
+
+	ground := primitives.CreatePlane(2, 2, groundMaterial)
+	ground.TransformMesh(mgl32.HomogRotate3DX(mgl32.DegToRad(-90)))
+
+	cube := primitives.CreateCube(.5, .5, .5, wallMaterial)
+	cube.TransformMesh(mgl32.Translate3D(0, .25, 0))
+
+	scene := renderer.Scene{
+		Models: []renderer.Model{
+			{
+				Meshes: []renderer.Mesh{ground},
+			},
+			{
+				Meshes: []renderer.Mesh{cube},
+			},
 		},
-	}}
+		Camera: renderer.Camera{
+			FOV:         45,
+			AspectRatio: width / height,
+		},
+	}
 
 	renderer.Render(scene, window)
 }
 
 //gl.UseProgram(program)
 
-//projection := mgl32.Perspective(mgl32.DegToRad(45), width/height, 0.1, 100)
+//projection := mgl32.Perspective(
+// mgl32.DegToRad(45), width/height, 0.1, 100)
 //model := mgl32.Ident4()
 //view := mgl32.Translate3D(0, -0.0, -3.0).Mul4(mgl32.HomogRotate3DX(mgl32.DegToRad(30)))
 

@@ -7,7 +7,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func CompileShaders() ShaderMap {
+func CompileShaders(defaultProjection mgl32.Mat4) ShaderMap {
 	lambertVs := common.LoadShaderSource("./internal/shaders/lambert.vs")
 	lambertFs := common.LoadShaderSource("./internal/shaders/lambert.fs")
 
@@ -19,7 +19,6 @@ func CompileShaders() ShaderMap {
 	defaultColor := mgl32.Vec4{.2, .2, .2, 1}
 
 	projUniform := gl.GetUniformLocation(mat, gl.Str(ProjectionMatrix))
-	defaultProjection := mgl32.Ident4()
 
 	viewUniform := gl.GetUniformLocation(mat, gl.Str(ViewMatrix))
 	defaultView := mgl32.Ident4()
