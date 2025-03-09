@@ -10,13 +10,13 @@ import (
 
 const width, height = 800, 600
 
-func attachModelToProgram(program uint32) int32 {
+func getUniformLocationToProgram(program uint32, varName string) int32 {
 
 	gl.UseProgram(program)
 
 	modelUniform := gl.GetUniformLocation(
 		program,
-		gl.Str("model\x00"),
+		gl.Str(varName + "\x00"),
 	)
 
 	return (modelUniform)
@@ -79,18 +79,20 @@ func Main() {
 	// 2. Load, compile and link program
 	vsSource := common.LoadShaderSource("./internal/triangle/vertexShader.vs")
 	fsSource1 := common.LoadShaderSource("./internal/triangle/fragmentShader1.fs")
-	fsSource2 := common.LoadShaderSource("./internal/triangle/fragmentShader2.fs")
 	program1 := common.NewProgram(vsSource, fsSource1)
-	program2 := common.NewProgram(vsSource, fsSource2)
 
 	// 3. model
 	model := mgl32.Ident4()
+  modelUniform := gl.GetUniformLocation(
+		program1,
+		gl.Str("model\x00"),
+	)
+	gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
-	model1 := attachModelToProgram(program1)
-	model2 := attachModelToProgram(program2)
-
-	gl.UniformMatrix4fv(model1, 1, false, &model[0])
-	gl.UniformMatrix4fv(model2, 1, false, &model[0])
+  // 4. color
+  color := mgl32.Vec4([]float32{0, 0, 0})
+  colorUniform := gl.GetUniformLocation(program1, gl.Str("color\x00"))
+  gl.Uniform4fv(colorUniform, 1, &color[0])
 
 	angle := 0.0
 	prevTime := glfw.GetTime()
@@ -111,11 +113,8 @@ func Main() {
 			mgl32.Vec3{0, 1, 0},
 		)
 
-		if int(angle) % 10  > 5 {
-			gl.UseProgram(program2)
-		} else {
-			gl.UseProgram(program1)
-		}
+		gl.UseProgram(program1)
+
 		gl.UniformMatrix4fv(model1, 1, false, &model[0])
 		gl.BindVertexArray(vao)
 		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
