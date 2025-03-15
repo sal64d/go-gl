@@ -15,8 +15,8 @@ func Render(scene Scene, window *glfw.Window) {
 	)
 
 	view := mgl32.Translate3D(0, -0.3, -3).Mul4(
-    mgl32.HomogRotate3DX(mgl32.DegToRad(30)),
-  )
+		mgl32.HomogRotate3DX(mgl32.DegToRad(30)),
+	)
 
 	shaderMap := CompileShaders(proj)
 
