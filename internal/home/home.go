@@ -12,22 +12,6 @@ import (
 const width = 800
 const height = 600
 
-// ground
-// + grass texture
-
-// wasd movement
-// mouse movement
-
-// simple flat house with
-// - 4 walls with intersection checks
-// - 3 windows on the wall
-// - a door that opens / closes on interaction
-
-// Scene
-// models
-// meshes
-// texturs
-
 type GameState struct {
 	playerPosition mgl32.Vec3
 	isDoorOpen     bool

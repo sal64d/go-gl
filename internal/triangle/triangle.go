@@ -16,7 +16,7 @@ func getUniformLocationToProgram(program uint32, varName string) int32 {
 
 	modelUniform := gl.GetUniformLocation(
 		program,
-		gl.Str(varName + "\x00"),
+		gl.Str(varName+"\x00"),
 	)
 
 	return (modelUniform)
@@ -83,16 +83,18 @@ func Main() {
 
 	// 3. model
 	model := mgl32.Ident4()
-  modelUniform := gl.GetUniformLocation(
+	modelUniform := gl.GetUniformLocation(
 		program1,
 		gl.Str("model\x00"),
 	)
+
+	gl.UseProgram(program1)
 	gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
-  // 4. color
-  color := mgl32.Vec4([]float32{0, 0, 0})
-  colorUniform := gl.GetUniformLocation(program1, gl.Str("color\x00"))
-  gl.Uniform4fv(colorUniform, 1, &color[0])
+	// 4. color
+	color := mgl32.Vec4([]float32{0, 0, 0, 0})
+	colorUniform := gl.GetUniformLocation(program1, gl.Str("color\x00"))
+	gl.Uniform4fv(colorUniform, 1, &color[0])
 
 	angle := 0.0
 	prevTime := glfw.GetTime()
@@ -115,12 +117,12 @@ func Main() {
 
 		gl.UseProgram(program1)
 
-		gl.UniformMatrix4fv(model1, 1, false, &model[0])
+		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 		gl.BindVertexArray(vao)
 		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 
 		gl.DrawElements(
-			gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil,
+			gl.TRIANGLES, 3, gl.UNSIGNED_INT, nil,
 		)
 
 		window.SwapBuffers()

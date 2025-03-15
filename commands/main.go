@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-rpg/internal/home"
+	"go-rpg/internal/triangle"
 	"runtime"
 )
 
@@ -10,5 +10,6 @@ func init() {
 }
 
 func main() {
-	home.Main()
+	//	home.Main()
+	triangle.Main()
 }
