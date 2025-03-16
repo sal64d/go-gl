@@ -100,6 +100,13 @@ func (self *Renderer) DrawMesh(
 		&modelMatrix[0],
 	)
 
+	// Texture
+	material.Texture.Bind(gl.TEXTURE0)
+	gl.Uniform1i(
+		shader.GetUniformLocation(MatTex),
+		int32(material.Texture.Handle-gl.TEXTURE0),
+	)
+
 	gl.BindVertexArray(meshGL.VAO)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshGL.EBO)
 
@@ -125,10 +132,15 @@ func generateModelGLData(models []Model) []ModelGL {
 			gl.BindVertexArray(VAO)
 
 			vertexData := []float32{}
-			for _, v := range mesh.Vertices {
+			for i, v := range mesh.Vertices {
+				// Loc
 				vertexData = append(vertexData, v.X())
 				vertexData = append(vertexData, v.Y())
 				vertexData = append(vertexData, v.Z())
+
+				// UV
+				vertexData = append(vertexData, mesh.UV[i].X())
+				vertexData = append(vertexData, mesh.UV[i].Y())
 			}
 
 			var VBO uint32
@@ -151,15 +163,29 @@ func generateModelGLData(models []Model) []ModelGL {
 				gl.STATIC_DRAW,
 			)
 
+			stride := int32(3*4 + 2*4)
+
+			// Loc
 			gl.VertexAttribPointerWithOffset(
 				0,
 				3,
 				gl.FLOAT,
 				false,
-				3*4,
+				stride,
 				0,
 			)
 			gl.EnableVertexAttribArray(0)
+
+			// Tex
+			gl.VertexAttribPointerWithOffset(
+				1,
+				2,
+				gl.FLOAT,
+				false,
+				stride,
+				3*4,
+			)
+			gl.EnableVertexAttribArray(1)
 
 			Size := int32(len(mesh.Indices))
 			Material := mesh.Material

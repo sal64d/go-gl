@@ -9,8 +9,8 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-const width = 800
-const height = 600
+const width = 1280
+const height = 800
 
 type GameState struct {
 	playerPosition mgl32.Vec3
@@ -22,14 +22,24 @@ func Main() {
 	common.InitGlow()
 	defer glfw.Terminate()
 
+	GroudTexture := renderer.LoadTextureFromFile(
+		"./internal/textures/forrest_ground_03_diff_1k.jpg",
+	)
+
+	BrickTexture := renderer.LoadTextureFromFile(
+		"./internal/textures/red_brick_diff_1k.jpg",
+	)
+
 	groundMaterial := renderer.Material{
 		ShaderType: renderer.Lambert,
 		Color:      mgl32.Vec4{0.2, 0.2, 0.2, 1},
+		Texture:    GroudTexture,
 	}
 
 	wallMaterial := renderer.Material{
 		ShaderType: renderer.Lambert,
 		Color:      mgl32.Vec4{1.0, 0.2, 0.2, 1},
+		Texture:    BrickTexture,
 	}
 
 	ground := primitives.CreatePlane(2, 2, groundMaterial)
@@ -58,7 +68,9 @@ func Main() {
 	angle := 0.0
 	for r.Step() {
 		angle += r.State.TimeDelta
-		r.SceneGL.CameraGL.ViewMatrix = mgl32.Translate3D(0, -0.5, -3).Mul4(
+		r.SceneGL.CameraGL.ViewMatrix = mgl32.Translate3D(0, -0.2, -3).Mul4(
+      mgl32.HomogRotate3DX(float32(mgl32.DegToRad(30))),
+    ).Mul4(
 			mgl32.HomogRotate3DY(float32(angle)),
 		)
 		r.Draw()

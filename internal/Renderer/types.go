@@ -22,42 +22,43 @@ type Model struct {
 type Mesh struct {
 	Vertices []mgl32.Vec3
 	Indices  []int32
+	UV       []mgl32.Vec2
 	Material Material
 }
 
 type Renderer struct {
-  SceneGL SceneGL
-  State RendererState
-  Window *glfw.Window
-  ShaderMap ShaderMap
+	SceneGL   SceneGL
+	State     RendererState
+	Window    *glfw.Window
+	ShaderMap ShaderMap
 }
 
 type RendererState struct {
-  TimeDelta float64
-  Time float64
+	TimeDelta float64
+	Time      float64
 }
 
 type SceneGL struct {
 	ModelsGL []ModelGL
-  CameraGL CameraGL
+	CameraGL CameraGL
 }
 
 type CameraGL struct {
-  ProjectionMatrix mgl32.Mat4
-  ViewMatrix mgl32.Mat4
+	ProjectionMatrix mgl32.Mat4
+	ViewMatrix       mgl32.Mat4
 }
 
 type ModelGL struct {
-	MeshesGL []MeshGL
-  ModelMatrix mgl32.Mat4
+	MeshesGL    []MeshGL
+	ModelMatrix mgl32.Mat4
 }
 
 type MeshGL struct {
-	VAO  uint32
-	VBO  uint32
-	EBO  uint32
-	Size int32
-  Material Material
+	VAO      uint32
+	VBO      uint32
+	EBO      uint32
+	Size     int32
+	Material Material
 }
 
 type ShaderType int
@@ -67,21 +68,26 @@ const (
 )
 
 const (
-  ProjectionMatrix = "ProjectionMatrix"
-  ViewMatrix = "ViewMatrix"
-  ModelMatrix = "ModelMatrix"
-
-  MatColor = "MatColor"
+	ProjectionMatrix = "ProjectionMatrix"
+	ViewMatrix       = "ViewMatrix"
+	ModelMatrix      = "ModelMatrix"
+	MatColor         = "MatColor"
+	MatTex           = "MatTex"
 )
 
 type Material struct {
 	ShaderType ShaderType
-  Color mgl32.Vec4
+	Color      mgl32.Vec4
+	Texture    Texture
+}
+
+type Texture struct {
+	Target uint32
+	Handle uint32
 }
 
 type Shader struct {
-  Program uint32
+	Program uint32
 }
 
 type ShaderMap map[ShaderType]Shader
-
