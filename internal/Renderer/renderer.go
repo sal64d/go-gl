@@ -6,57 +6,99 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func Render(scene Scene, window *glfw.Window) {
-	proj := mgl32.Perspective(
-		mgl32.DegToRad(scene.Camera.FOV),
-		scene.Camera.AspectRatio,
-		0.1,
-		100.0,
-	)
+func CreateRenderer(scene Scene, Window *glfw.Window) Renderer {
+	ShaderMap := CompileShaders()
 
-	view := mgl32.Translate3D(0, -0.3, -3).Mul4(
-		mgl32.HomogRotate3DX(mgl32.DegToRad(30)),
-	)
+	SceneGL := SceneGL{
+		ModelsGL: generateModelGLData(scene.Models),
+		CameraGL: generateCameraGL(scene.Camera),
+	}
 
-	shaderMap := CompileShaders(proj)
-
-	sceneGL := GenerateGLData(scene)
-
-	prevTime := glfw.GetTime()
-	angle := 0.0
+	State := RendererState{
+		TimeDelta: 0,
+		Time:      glfw.GetTime(),
+	}
 
 	gl.Enable(gl.DEPTH_TEST)
+	gl.ClearColor(0, 0, 0, 1)
 
-	for !window.ShouldClose() {
-		gl.ClearColor(0, 0, 0, 1)
-		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-		currTime := glfw.GetTime()
-		elapsedTime := currTime - prevTime
-		prevTime = currTime
-		angle += elapsedTime
-
-		turnTableView := view.Mul4(mgl32.HomogRotate3DY(float32(angle)))
-
-		for i, modelGL := range sceneGL.ModelsGL {
-			for j, meshGL := range modelGL.MeshesGL {
-				Draw(elapsedTime, meshGL, scene.Models[i].Meshes[j].Material, shaderMap, turnTableView)
-			}
-		}
-
-		window.SwapBuffers()
-		glfw.PollEvents()
+	return Renderer{
+		SceneGL,
+		State,
+		Window,
+		ShaderMap,
 	}
 }
 
-func Draw(elapsedTime float64, meshGL MeshGL, material Material, shaderMap ShaderMap, view mgl32.Mat4) {
-	shader := shaderMap[material.ShaderType]
+func (self *Renderer) Step() bool {
+	if self.Window.ShouldClose() {
+		return false
+	}
 
-	gl.UseProgram(shader.Program)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	// apply the material color to shader
-	gl.Uniform4fv(shader.uniforms[MatColor], 1, &material.Color[0])
-	gl.UniformMatrix4fv(shader.uniforms[ViewMatrix], 1, false, &view[0])
+	time := glfw.GetTime()
+	self.State.TimeDelta = time - self.State.Time
+	self.State.Time = time
+
+	return true
+}
+
+func (self *Renderer) Draw() {
+	for _, modelGL := range self.SceneGL.ModelsGL {
+		for _, meshGL := range modelGL.MeshesGL {
+			self.DrawMesh(
+				meshGL,
+				meshGL.Material,
+				modelGL.ModelMatrix,
+			)
+		}
+	}
+
+	self.Window.SwapBuffers()
+	glfw.PollEvents()
+
+}
+
+func (self *Renderer) DrawMesh(
+	meshGL MeshGL,
+	material Material,
+	modelMatrix mgl32.Mat4,
+) {
+	shader := self.ShaderMap[material.ShaderType]
+
+	shader.UseProgram()
+
+	// Color
+	gl.Uniform4fv(
+		shader.GetUniformLocation(MatColor),
+		1,
+		&material.Color[0],
+	)
+
+	// Projection
+	gl.UniformMatrix4fv(
+		shader.GetUniformLocation(ProjectionMatrix),
+		1,
+		false,
+		&self.SceneGL.CameraGL.ProjectionMatrix[0],
+	)
+
+	// View
+	gl.UniformMatrix4fv(
+		shader.GetUniformLocation(ViewMatrix),
+		1,
+		false,
+		&self.SceneGL.CameraGL.ViewMatrix[0],
+	)
+
+	// Model
+	gl.UniformMatrix4fv(
+		shader.GetUniformLocation(ModelMatrix),
+		1,
+		false,
+		&modelMatrix[0],
+	)
 
 	gl.BindVertexArray(meshGL.VAO)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshGL.EBO)
@@ -69,10 +111,10 @@ func Draw(elapsedTime float64, meshGL MeshGL, material Material, shaderMap Shade
 	)
 }
 
-func GenerateGLData(scene Scene) (sceneGL SceneGL) {
+func generateModelGLData(models []Model) []ModelGL {
 	ModelsGL := []ModelGL{}
 
-	for _, model := range scene.Models {
+	for _, model := range models {
 
 		MeshesGL := []MeshGL{}
 
@@ -120,12 +162,30 @@ func GenerateGLData(scene Scene) (sceneGL SceneGL) {
 			gl.EnableVertexAttribArray(0)
 
 			Size := int32(len(mesh.Indices))
-			MeshesGL = append(MeshesGL, MeshGL{VAO, VBO, EBO, Size})
+			Material := mesh.Material
+
+			MeshesGL = append(MeshesGL, MeshGL{VAO, VBO, EBO, Size, Material})
 		}
 
-		ModelsGL = append(ModelsGL, ModelGL{MeshesGL})
+		ModelMatrix := mgl32.Ident4()
+		ModelsGL = append(ModelsGL, ModelGL{MeshesGL, ModelMatrix})
 	}
 
-	sceneGL.ModelsGL = ModelsGL
+	return ModelsGL
+}
+
+func generateCameraGL(camera Camera) (cameraGL CameraGL) {
+	cameraGL.ProjectionMatrix = mgl32.Perspective(
+		mgl32.DegToRad(camera.FOV),
+		camera.AspectRatio,
+		0.1,
+		100.0,
+	)
+
+	cameraGL.ViewMatrix = mgl32.Translate3D(0, -0.3, -3).Mul4(
+		mgl32.HomogRotate3DX(mgl32.DegToRad(30)),
+	)
+
 	return
+
 }

@@ -1,6 +1,9 @@
 package renderer
 
-import "github.com/go-gl/mathgl/mgl32"
+import (
+	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/mathgl/mgl32"
+)
 
 type Scene struct {
 	Models []Model
@@ -22,12 +25,31 @@ type Mesh struct {
 	Material Material
 }
 
+type Renderer struct {
+  SceneGL SceneGL
+  State RendererState
+  Window *glfw.Window
+  ShaderMap ShaderMap
+}
+
+type RendererState struct {
+  TimeDelta float64
+  Time float64
+}
+
 type SceneGL struct {
 	ModelsGL []ModelGL
+  CameraGL CameraGL
+}
+
+type CameraGL struct {
+  ProjectionMatrix mgl32.Mat4
+  ViewMatrix mgl32.Mat4
 }
 
 type ModelGL struct {
 	MeshesGL []MeshGL
+  ModelMatrix mgl32.Mat4
 }
 
 type MeshGL struct {
@@ -35,6 +57,7 @@ type MeshGL struct {
 	VBO  uint32
 	EBO  uint32
 	Size int32
+  Material Material
 }
 
 type ShaderType int
@@ -43,14 +66,12 @@ const (
 	Lambert = iota
 )
 
-type StdUniform string
-
 const (
-  ProjectionMatrix = "proj\x00"
-  ViewMatrix = "view\x00"
-  ModelMatrix = "model\x00"
+  ProjectionMatrix = "ProjectionMatrix"
+  ViewMatrix = "ViewMatrix"
+  ModelMatrix = "ModelMatrix"
 
-  MatColor = "color\x00"
+  MatColor = "MatColor"
 )
 
 type Material struct {
@@ -60,8 +81,7 @@ type Material struct {
 
 type Shader struct {
   Program uint32
-  uniforms UniformMap
 }
 
 type ShaderMap map[ShaderType]Shader
-type UniformMap map[StdUniform]int32
+
