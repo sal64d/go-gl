@@ -35,8 +35,11 @@ func CreateCube(width float32, height float32, depth float32, material renderer.
 		combinedVecs[i] = frontFace[i]
 		combinedVecs[i+4] = frontFace[i].Add(back)
 		uv[i] = faceUV[i]
-		uv[i+4] = faceUV[i]
 	}
+	uv[4] = faceUV[1]
+	uv[5] = faceUV[0]
+	uv[6] = faceUV[3]
+	uv[7] = faceUV[2]
 
 	scaler := mgl32.Scale3D(width, height, depth)
 

@@ -1,6 +1,8 @@
 package renderer
 
 import (
+	"log"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl32"
@@ -10,7 +12,7 @@ func CreateRenderer(scene Scene, Window *glfw.Window) Renderer {
 	ShaderMap := CompileShaders()
 
 	SceneGL := SceneGL{
-		ModelsGL: generateModelGLData(scene.Models),
+		ModelsGL: generateModelGLData(scene.Models, ShaderMap),
 		CameraGL: generateCameraGL(scene.Camera),
 	}
 
@@ -26,7 +28,6 @@ func CreateRenderer(scene Scene, Window *glfw.Window) Renderer {
 		SceneGL,
 		State,
 		Window,
-		ShaderMap,
 	}
 }
 
@@ -49,7 +50,6 @@ func (self *Renderer) Draw() {
 		for _, meshGL := range modelGL.MeshesGL {
 			self.DrawMesh(
 				meshGL,
-				meshGL.Material,
 				modelGL.ModelMatrix,
 			)
 		}
@@ -62,10 +62,10 @@ func (self *Renderer) Draw() {
 
 func (self *Renderer) DrawMesh(
 	meshGL MeshGL,
-	material Material,
 	modelMatrix mgl32.Mat4,
 ) {
-	shader := self.ShaderMap[material.ShaderType]
+	material := meshGL.Material
+	shader := material.ShaderProg
 
 	shader.UseProgram()
 
@@ -100,12 +100,20 @@ func (self *Renderer) DrawMesh(
 		&modelMatrix[0],
 	)
 
-	// Texture
-	material.Texture.Bind(gl.TEXTURE0)
-	gl.Uniform1i(
-		shader.GetUniformLocation(MatTex),
-		int32(material.Texture.Handle-gl.TEXTURE0),
-	)
+	// Diffuse texture
+	diff, ok := material.TextureGLMap[Diffuse]
+	if ok {
+		diff.Bind(gl.TEXTURE0)
+		gl.Uniform1i(
+			shader.GetUniformLocation(MatDiffTex),
+			int32(diff.Handle-gl.TEXTURE0),
+		)
+
+		gl.Uniform1f(
+			shader.GetUniformLocation(MatDiffOpacity),
+			diff.Opacity,
+		)
+	}
 
 	gl.BindVertexArray(meshGL.VAO)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshGL.EBO)
@@ -118,7 +126,7 @@ func (self *Renderer) DrawMesh(
 	)
 }
 
-func generateModelGLData(models []Model) []ModelGL {
+func generateModelGLData(models []Model, shaderMap ShaderMap) []ModelGL {
 	ModelsGL := []ModelGL{}
 
 	for _, model := range models {
@@ -187,10 +195,28 @@ func generateModelGLData(models []Model) []ModelGL {
 			)
 			gl.EnableVertexAttribArray(1)
 
-			Size := int32(len(mesh.Indices))
-			Material := mesh.Material
+			size := int32(len(mesh.Indices))
 
-			MeshesGL = append(MeshesGL, MeshGL{VAO, VBO, EBO, Size, Material})
+			// Load the textures
+			var textureGLMap TextureGLMap = make(TextureGLMap)
+			for key, texture := range mesh.Material.Texture {
+				textureGLMap[key] = texture.Load()
+			}
+
+			// Load shader
+			shaderProg, ok := shaderMap[mesh.Material.ShaderType]
+			if !ok {
+				log.Panicln("Shader undefined", mesh.Material.ShaderType)
+			}
+
+			// Build material
+			materialGL := MaterialGL{
+				shaderProg,
+				mesh.Material.Color,
+				textureGLMap,
+			}
+
+			MeshesGL = append(MeshesGL, MeshGL{VAO, VBO, EBO, size, materialGL})
 		}
 
 		ModelMatrix := mgl32.Ident4()

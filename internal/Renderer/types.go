@@ -27,10 +27,9 @@ type Mesh struct {
 }
 
 type Renderer struct {
-	SceneGL   SceneGL
-	State     RendererState
-	Window    *glfw.Window
-	ShaderMap ShaderMap
+	SceneGL SceneGL
+	State   RendererState
+	Window  *glfw.Window
 }
 
 type RendererState struct {
@@ -58,7 +57,7 @@ type MeshGL struct {
 	VBO      uint32
 	EBO      uint32
 	Size     int32
-	Material Material
+	Material MaterialGL
 }
 
 type ShaderType int
@@ -72,18 +71,42 @@ const (
 	ViewMatrix       = "ViewMatrix"
 	ModelMatrix      = "ModelMatrix"
 	MatColor         = "MatColor"
-	MatTex           = "MatTex"
+	MatDiffTex       = "MatDiffTex"
+	MatDiffOpacity   = "MatDiffOpacity"
 )
 
 type Material struct {
 	ShaderType ShaderType
 	Color      mgl32.Vec4
-	Texture    Texture
+	Texture    TextureMap
 }
 
+type MaterialGL struct {
+	ShaderProg   Shader
+	Color        mgl32.Vec4
+	TextureGLMap TextureGLMap
+}
+
+type TextureType string
+
+const (
+	Diffuse = "diffuse"
+)
+
+type TextureMap map[TextureType]Texture
+type TextureGLMap map[TextureType]TextureGL
+
 type Texture struct {
-	Target uint32
-	Handle uint32
+	Filepath string
+	Wrap_s   int32
+	Wrap_r   int32
+	Opacity  float32
+}
+
+type TextureGL struct {
+	Opacity float32
+	Target  uint32
+	Handle  uint32
 }
 
 type Shader struct {

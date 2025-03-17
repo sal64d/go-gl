@@ -11,7 +11,12 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
-func LoadTextureFromFile(filePath string) Texture {
+func LoadTextureFromFile(
+	filePath string,
+	wrap_s int32,
+	wrap_r int32,
+	opacity float32,
+) TextureGL {
 	imgFile, err := os.Open(filePath)
 	if err != nil {
 		log.Panicln("Load texture failed", err)
@@ -40,32 +45,41 @@ func LoadTextureFromFile(filePath string) Texture {
 	var handle uint32
 	gl.GenTextures(1, &handle)
 
-	texture := Texture{target, handle}
+	texture := TextureGL{opacity, target, handle}
 	texture.Bind(gl.TEXTURE0)
 
-	gl.TextureParameteri(texture.Target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TextureParameteri(texture.Target, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
+	gl.TextureParameteri(texture.Target, gl.TEXTURE_WRAP_S, wrap_s)
+	gl.TextureParameteri(texture.Target, gl.TEXTURE_WRAP_R, wrap_r)
 
 	gl.TexParameteri(texture.Target, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(texture.Target, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
-  gl.TexImage2D(
-    gl.TEXTURE_2D,
-    0,
-    gl.RGBA,
-    width,
-    height,
-    0,
-    gl.RGBA,
-    gl.UNSIGNED_BYTE,
-    gl.Ptr(rgba.Pix),
-  )
-  gl.GenerateMipmap(texture.Handle)
+	gl.TexImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RGBA,
+		width,
+		height,
+		0,
+		gl.RGBA,
+		gl.UNSIGNED_BYTE,
+		gl.Ptr(rgba.Pix),
+	)
+	gl.GenerateMipmap(texture.Handle)
 
 	return texture
 }
 
-func (self *Texture) Bind(bindTo uint32) {
+func (self *TextureGL) Bind(bindTo uint32) {
 	gl.ActiveTexture(bindTo)
 	gl.BindTexture(self.Target, self.Handle)
+}
+
+func (self *Texture) Load() TextureGL {
+	return LoadTextureFromFile(
+		self.Filepath,
+		self.Wrap_s,
+		self.Wrap_r,
+		self.Opacity,
+	)
 }
