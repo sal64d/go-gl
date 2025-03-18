@@ -25,16 +25,16 @@ func Main() {
 
 	GroudTexture := renderer.Texture{
 		Filepath: "./internal/textures/forrest_ground_03_diff_1k.jpg",
-		Wrap_s:   gl.CLAMP_TO_EDGE,
-		Wrap_r:   gl.CLAMP_TO_EDGE,
+		Wrap_s:   gl.MIRRORED_REPEAT,
+		Wrap_r:   gl.MIRRORED_REPEAT,
 		Opacity:  1.0,
 	}
 
 	BrickTexture := renderer.Texture{
 		Filepath: "./internal/textures/red_brick_diff_1k.jpg",
-		Wrap_s:   gl.CLAMP_TO_EDGE,
-		Wrap_r:   gl.CLAMP_TO_EDGE,
-		Opacity:  0.5,
+		Wrap_s:   gl.MIRRORED_REPEAT,
+		Wrap_r:   gl.MIRRORED_REPEAT,
+		Opacity:  1.0,
 	}
 
 	groundMaterial := renderer.Material{
@@ -49,10 +49,10 @@ func Main() {
 		Texture:    renderer.TextureMap{renderer.Diffuse: BrickTexture},
 	}
 
-	ground := primitives.CreatePlane(2, 2, groundMaterial)
+  ground := primitives.CreatePlane(2, 2, 2, 2, groundMaterial)
 	ground.TransformMesh(mgl32.HomogRotate3DX(mgl32.DegToRad(-90)))
 
-	cube := primitives.CreateCube(.5, 1, .5, wallMaterial)
+	cube := primitives.CreateCube2(.5, 1, .5, 1.5, 1.5, wallMaterial)
 	cube.TransformMesh(mgl32.Translate3D(0, .25, 0))
 
 	scene := renderer.Scene{

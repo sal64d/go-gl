@@ -19,11 +19,17 @@ type Model struct {
 	Meshes []Mesh
 }
 
+const (
+	EnableEBO = 0x01
+	EnableUV  = 0x02
+)
+
 type Mesh struct {
-	Vertices []mgl32.Vec3
-	Indices  []int32
-	UV       []mgl32.Vec2
-	Material Material
+	Vertices     []mgl32.Vec3
+	Indices      []int32
+	UV           []mgl32.Vec2
+	Material     Material
+	FeatureFlags uint
 }
 
 type Renderer struct {
@@ -53,11 +59,12 @@ type ModelGL struct {
 }
 
 type MeshGL struct {
-	VAO      uint32
-	VBO      uint32
-	EBO      uint32
-	Size     int32
-	Material MaterialGL
+	VAO       uint32
+	VBO       uint32
+	EBO       uint32
+	Size      int32
+	Material  MaterialGL
+	FeatureFlags uint
 }
 
 type ShaderType int

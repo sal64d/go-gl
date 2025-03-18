@@ -67,6 +67,9 @@ func (self *Renderer) DrawMesh(
 	material := meshGL.Material
 	shader := material.ShaderProg
 
+  enableUV := meshGL.FeatureFlags&EnableUV != 0
+	enableEBO := meshGL.FeatureFlags&EnableEBO != 0
+
 	shader.UseProgram()
 
 	// Color
@@ -102,7 +105,7 @@ func (self *Renderer) DrawMesh(
 
 	// Diffuse texture
 	diff, ok := material.TextureGLMap[Diffuse]
-	if ok {
+	if enableUV && ok {
 		diff.Bind(gl.TEXTURE0)
 		gl.Uniform1i(
 			shader.GetUniformLocation(MatDiffTex),
@@ -116,14 +119,23 @@ func (self *Renderer) DrawMesh(
 	}
 
 	gl.BindVertexArray(meshGL.VAO)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshGL.EBO)
 
-	gl.DrawElements(
-		gl.TRIANGLES,
-		meshGL.Size,
-		gl.UNSIGNED_INT,
-		nil,
-	)
+	if enableEBO {
+		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshGL.EBO)
+
+		gl.DrawElements(
+			gl.TRIANGLES,
+			meshGL.Size,
+			gl.UNSIGNED_INT,
+			nil,
+		)
+	} else {
+		gl.DrawArrays(
+			gl.TRIANGLES,
+			0,
+			meshGL.Size,
+		)
+	}
 }
 
 func generateModelGLData(models []Model, shaderMap ShaderMap) []ModelGL {
@@ -136,6 +148,9 @@ func generateModelGLData(models []Model, shaderMap ShaderMap) []ModelGL {
 		for _, mesh := range model.Meshes {
 			var VAO uint32
 
+			enableUV := mesh.FeatureFlags&EnableUV != 0
+			enableEBO := mesh.FeatureFlags&EnableEBO != 0
+
 			gl.GenVertexArrays(1, &VAO)
 			gl.BindVertexArray(VAO)
 
@@ -146,9 +161,11 @@ func generateModelGLData(models []Model, shaderMap ShaderMap) []ModelGL {
 				vertexData = append(vertexData, v.Y())
 				vertexData = append(vertexData, v.Z())
 
-				// UV
-				vertexData = append(vertexData, mesh.UV[i].X())
-				vertexData = append(vertexData, mesh.UV[i].Y())
+				if enableUV {
+					// UV
+					vertexData = append(vertexData, mesh.UV[i].X())
+					vertexData = append(vertexData, mesh.UV[i].Y())
+				}
 			}
 
 			var VBO uint32
@@ -162,16 +179,24 @@ func generateModelGLData(models []Model, shaderMap ShaderMap) []ModelGL {
 			)
 
 			var EBO uint32
-			gl.GenBuffers(1, &EBO)
-			gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO)
-			gl.BufferData(
-				gl.ELEMENT_ARRAY_BUFFER,
-				len(mesh.Indices)*4,
-				gl.Ptr(mesh.Indices),
-				gl.STATIC_DRAW,
-			)
 
-			stride := int32(3*4 + 2*4)
+			if enableEBO {
+				gl.GenBuffers(1, &EBO)
+				gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO)
+				gl.BufferData(
+					gl.ELEMENT_ARRAY_BUFFER,
+					len(mesh.Indices)*4,
+					gl.Ptr(mesh.Indices),
+					gl.STATIC_DRAW,
+				)
+			}
+
+			stride := int32(3 * 4)
+			offset := 0
+
+			if enableUV {
+				stride += 2 * 4
+			}
 
 			// Loc
 			gl.VertexAttribPointerWithOffset(
@@ -180,22 +205,31 @@ func generateModelGLData(models []Model, shaderMap ShaderMap) []ModelGL {
 				gl.FLOAT,
 				false,
 				stride,
-				0,
+				uintptr(offset),
 			)
 			gl.EnableVertexAttribArray(0)
 
-			// Tex
-			gl.VertexAttribPointerWithOffset(
-				1,
-				2,
-				gl.FLOAT,
-				false,
-				stride,
-				3*4,
-			)
-			gl.EnableVertexAttribArray(1)
+			offset += 3 * 4
 
-			size := int32(len(mesh.Indices))
+			// Tex
+			if enableUV {
+				gl.VertexAttribPointerWithOffset(
+					1,
+					2,
+					gl.FLOAT,
+					false,
+					stride,
+					uintptr(offset),
+				)
+				gl.EnableVertexAttribArray(1)
+			}
+
+			var size int32
+			if enableEBO {
+				size = int32(len(mesh.Indices))
+			} else {
+				size = int32(len(mesh.Vertices))
+			}
 
 			// Load the textures
 			var textureGLMap TextureGLMap = make(TextureGLMap)
@@ -216,7 +250,16 @@ func generateModelGLData(models []Model, shaderMap ShaderMap) []ModelGL {
 				textureGLMap,
 			}
 
-			MeshesGL = append(MeshesGL, MeshGL{VAO, VBO, EBO, size, materialGL})
+			meshGL := MeshGL{
+				VAO,
+				VBO,
+				EBO,
+				size,
+				materialGL,
+				mesh.FeatureFlags,
+			}
+
+			MeshesGL = append(MeshesGL, meshGL)
 		}
 
 		ModelMatrix := mgl32.Ident4()

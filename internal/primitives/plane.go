@@ -6,7 +6,13 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func CreatePlane(width float32, height float32, material renderer.Material) renderer.Mesh {
+func CreatePlane(
+	width float32,
+	height float32,
+	scale_u float32,
+	scale_v float32,
+	material renderer.Material,
+) renderer.Mesh {
 	repos := mgl32.Vec3{-0.5, -0.5, 0}
 
 	base := []mgl32.Vec3{
@@ -17,12 +23,13 @@ func CreatePlane(width float32, height float32, material renderer.Material) rend
 	}
 
 	scaler := mgl32.Scale2D(width, height)
+	uvScaler := mgl32.Scale2D(scale_u, scale_v)
 
 	var scaled [4]mgl32.Vec3
 	var uv [4]mgl32.Vec2
 	for i, v := range base {
 		scaled[i] = scaler.Mul3x1(v)
-		uv[i] = v.Vec2()
+		uv[i] = uvScaler.Mul3x1(v).Vec2()
 	}
 
 	return renderer.Mesh{
@@ -31,7 +38,8 @@ func CreatePlane(width float32, height float32, material renderer.Material) rend
 			0, 1, 2,
 			2, 1, 3,
 		},
-		UV:       uv[:],
-		Material: material,
+		UV:           uv[:],
+		Material:     material,
+		FeatureFlags: renderer.EnableUV | renderer.EnableEBO,
 	}
 }
